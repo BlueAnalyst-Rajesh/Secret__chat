@@ -1,34 +1,47 @@
 const express = require('express');
 const http = require('http');
-const { Server } = require('socket.io');
+const socketIo = require('socket.io');
 
 const app = express();
 const server = http.createServer(app);
-const io = new Server(server);
+const io = socketIo(server, {
+  maxHttpBufferSize: 1e7 // 10MB limit for image/audio sharing
+});
 
-// Serve static files from 'public' folder
 app.use(express.static('public'));
 
 io.on('connection', (socket) => {
-    console.log('A user connected:', socket.id);
+  socket.on('join-room', (roomId) => {
+    socket.join(roomId);
+    socket.to(roomId).emit('user-connected', socket.id);
+  });
 
-    // Join a private room using secret key
-    socket.on('join-room', (roomId) => {
-        socket.join(roomId);
-        console.log(`User joined room: ${roomId}`);
-    });
+  // Chat/Media messages relay
+  socket.on('send-message', (data) => {
+    socket.to(data.roomId).emit('receive-message', data);
+  });
 
-    // Receive encrypted message and forward to others in the same room
-    socket.on('send-message', (data) => {
-        socket.to(data.roomId).emit('receive-message', data.encryptedMsg);
-    });
+  // WebRTC Audio Call Signals
+  socket.on('call-user', (data) => {
+    socket.to(data.roomId).emit('call-made', { signal: data.signal, from: socket.id });
+  });
 
-    socket.on('disconnect', () => {
-        console.log('User disconnected');
-    });
+  socket.on('make-answer', (data) => {
+    socket.to(data.roomId).emit('answer-made', { signal: data.signal });
+  });
+
+  socket.on('ice-candidate', (data) => {
+    socket.to(data.roomId).emit('ice-candidate', data.candidate);
+  });
+
+  socket.on('end-call', (roomId) => {
+    socket.to(roomId).emit('call-ended');
+  });
+
+  socket.on('disconnect', () => {
+    io.emit('user-disconnected', socket.id);
+  });
 });
 
 const PORT = process.env.PORT || 3000;
-server.listen(PORT, () => {
-    console.log(`Server running on http://localhost:${PORT}`);
-});
+server.listen(PORT, () => console.log(`Server running on port ${PORT}`));
