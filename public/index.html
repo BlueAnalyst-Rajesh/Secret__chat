@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Secret Chat</title>
+    <style>
+        body { font-family: Arial, sans-serif; background: #121212; color: #fff; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+        .chat-container { width: 90%; max-width: 400px; background: #1e1e1e; padding: 20px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.5); }
+        .hidden { display: none; }
+        input, button { width: 100%; padding: 10px; margin: 8px 0; border-radius: 6px; border: none; box-sizing: border-box; }
+        input { background: #2a2a2a; color: #fff; }
+        button { background: #007bff; color: white; cursor: pointer; font-weight: bold; }
+        #chat-box { height: 250px; overflow-y: auto; border: 1px solid #333; padding: 10px; margin-bottom: 10px; border-radius: 6px; display: flex; flex-direction: column; }
+        .msg { margin: 5px 0; padding: 8px 12px; border-radius: 8px; max-width: 80%; word-wrap: break-word; }
+        .my-msg { background: #007bff; align-self: flex-end; }
+        .other-msg { background: #333; align-self: flex-start; }
+    </style>
+</head>
+<body>
+
+    <div class="chat-container">
+        <!-- Secret Room Login Screen -->
+        <div id="login-screen">
+            <h2>Secret Room Login</h2>
+            <input type="text" id="room-key" placeholder="Enter Secret Room Key">
+            <button onclick="enterRoom()">Enter Chat</button>
+        </div>
+
+        <!-- Secret Chat Screen -->
+        <div id="chat-screen" class="hidden">
+            <h3 id="room-title"></h3>
+            <div id="chat-box"></div>
+            <input type="text" id="message-input" placeholder="Type a message...">
+            <button onclick="sendMessage()">Send</button>
+        </div>
+    </div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        const socket = io();
+        let secretKey = "";
+
+        // Secret Key vechu message-a Encrypt / Decrypt panra function
+        function encryptDecrypt(text, key) {
+            let result = "";
+            for (let i = 0; i < text.length; i++) {
+                result += String.fromCharCode(text.charCodeAt(i) ^ key.charCodeAt(i % key.length));
+            }
+            return result;
+        }
+
+        function enterRoom() {
+            secretKey = document.getElementById("room-key").value;
+            if (!secretKey) return alert("Please enter secret key!");
+
+            socket.emit("join-room", secretKey);
+
+            document.getElementById("login-screen").classList.add("hidden");
+            document.getElementById("chat-screen").classList.remove("hidden");
+            document.getElementById("room-title").innerText = "🔒 Private Room";
+        }
+
+        function sendMessage() {
+            const msgInput = document.getElementById("message-input");
+            const rawText = msgInput.value;
+            if (!rawText) return;
+
+            // Encrypt message using Secret Key
+            const encrypted = encryptDecrypt(rawText, secretKey);
+            socket.emit("send-message", { roomId: secretKey, encryptedMsg: encrypted });
+
+            appendMessage(rawText, "my-msg");
+            msgInput.value = "";
+        }
+
+        socket.on("receive-message", (encryptedMsg) => {
+            // Decrypt message using same Secret Key
+            const decrypted = encryptDecrypt(encryptedMsg, secretKey);
+            appendMessage(decrypted, "other-msg");
+        });
+
+        function appendMessage(text, className) {
+            const chatBox = document.getElementById("chat-box");
+            const msgDiv = document.createElement("div");
+            msgDiv.className = `msg ${className}`;
+            msgDiv.innerText = text;
+            chatBox.appendChild(msgDiv);
+            chatBox.scrollTop = chatBox.scrollHeight;
+        }
+    </script>
+</body>
+</html>
