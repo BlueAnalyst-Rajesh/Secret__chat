@@ -26,7 +26,7 @@ io.on('connection', (socket) => {
     socket.to(data.roomId).emit('user-typing', data);
   });
 
-  // WebRTC Video/Audio Call Signals
+  // WebRTC Audio Call Signals
   socket.on('call-user', (data) => {
     socket.to(data.roomId).emit('call-made', { signal: data.signal, from: socket.id, isVideo: data.isVideo });
   });
