@@ -5,7 +5,7 @@ const socketIo = require('socket.io');
 const app = express();
 const server = http.createServer(app);
 const io = socketIo(server, {
-  maxHttpBufferSize: 1e7 // 10MB limit for image/audio sharing
+  maxHttpBufferSize: 5e7 // 50MB limit for large files/media sharing
 });
 
 app.use(express.static('public'));
@@ -16,14 +16,19 @@ io.on('connection', (socket) => {
     socket.to(roomId).emit('user-connected', socket.id);
   });
 
-  // Chat/Media messages relay
+  // Chat, Media & File relay
   socket.on('send-message', (data) => {
     socket.to(data.roomId).emit('receive-message', data);
   });
 
-  // WebRTC Audio Call Signals
+  // Typing Indicator
+  socket.on('typing', (data) => {
+    socket.to(data.roomId).emit('user-typing', data);
+  });
+
+  // WebRTC Video/Audio Call Signals
   socket.on('call-user', (data) => {
-    socket.to(data.roomId).emit('call-made', { signal: data.signal, from: socket.id });
+    socket.to(data.roomId).emit('call-made', { signal: data.signal, from: socket.id, isVideo: data.isVideo });
   });
 
   socket.on('make-answer', (data) => {
