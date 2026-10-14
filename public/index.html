@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Secret Chat - Modern UI</title>
+  <title>Secret Chat - Audio Call</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <style>
     :root {
@@ -117,12 +117,12 @@
       background: rgba(255, 255, 255, 0.06);
       border: 1px solid rgba(255, 255, 255, 0.08);
       color: #e2e8f0;
-      padding: 8px 14px;
+      padding: 8px 16px;
       border-radius: 20px;
       font-size: 0.85rem;
       display: flex;
       align-items: center;
-      gap: 6px;
+      gap: 8px;
       cursor: pointer;
     }
 
@@ -176,25 +176,20 @@
       width: 42px; height: 42px; border-radius: 50%; background: var(--accent); border: none; color: white; display: flex; justify-content: center; align-items: center; cursor: pointer;
     }
 
-    /* Call Modal Window */
+    /* Audio Call Modal */
     #call-modal {
       display: none;
       position: fixed;
       inset: 0;
-      background: rgba(11, 14, 20, 0.95);
+      background: rgba(11, 14, 20, 0.96);
       backdrop-filter: blur(12px);
       flex-direction: column;
       align-items: center;
       justify-content: center;
       z-index: 1000;
     }
-    .video-container { position: relative; width: 90%; max-width: 650px; height: 60vh; background: #111; border-radius: 20px; overflow: hidden; border: 1px solid rgba(255,255,255,0.2); display: none; }
-    #remote-video { width: 100%; height: 100%; object-fit: cover; }
-    #local-video { position: absolute; bottom: 15px; right: 15px; width: 130px; height: 100px; border-radius: 12px; object-fit: cover; border: 2px solid #fff; }
-
-    /* Audio Call Screen UI */
     .audio-container {
-      display: none;
+      display: flex;
       flex-direction: column;
       align-items: center;
       gap: 20px;
@@ -244,10 +239,9 @@
 
   <div id="chat-screen">
     <div class="action-bar">
-      <button class="action-btn" onclick="startCall(true)"><i class="fa-solid fa-video"></i> Video</button>
-      <button class="action-btn" onclick="startCall(false)"><i class="fa-solid fa-phone"></i> Audio</button>
-      <button class="action-btn" onclick="document.getElementById('file-input').click()"><i class="fa-solid fa-paperclip"></i> File</button>
-      <button class="action-btn" id="rec-btn" onclick="toggleRecord()"><i class="fa-solid fa-microphone"></i> Voice</button>
+      <button class="action-btn" onclick="startAudioCall()"><i class="fa-solid fa-phone" style="color:#10b981;"></i> Audio Call</button>
+      <button class="action-btn" onclick="document.getElementById('file-input').click()"><i class="fa-solid fa-paperclip"></i> File/Image</button>
+      <button class="action-btn" id="rec-btn" onclick="toggleRecord()"><i class="fa-solid fa-microphone"></i> Voice Note</button>
       <input type="file" id="file-input" style="display:none" onchange="sendFile(event)">
     </div>
 
@@ -261,25 +255,19 @@
   </div>
 </div>
 
-<!-- Call Modal Window -->
+<!-- Audio Call Screen -->
 <div id="call-modal">
-  <div class="video-container" id="video-ui">
-    <video id="remote-video" autoplay playsinline></video>
-    <video id="local-video" autoplay playsinline muted></video>
-  </div>
-
-  <div class="audio-container" id="audio-ui">
+  <div class="audio-container">
     <div class="avatar-circle">
-      <i class="fa-solid fa-user"></i>
+      <i class="fa-solid fa-user-secret"></i>
     </div>
-    <h3 style="color:#fff;">Audio Call Connected</h3>
-    <p style="color:#818cf8; font-size:0.85rem;" id="audio-status">Audio Active</p>
+    <h3 style="color:#fff;" id="call-status-text">Calling...</h3>
+    <p style="color:#10b981; font-size:0.85rem;">Secure P2P Audio</p>
   </div>
 
-  <!-- Audio playback element for audio calls -->
-  <audio id="remote-audio" autoplay playsinline></audio>
+  <audio id="remote-audio" autoplay></audio>
 
-  <button onclick="endCall()" class="btn-primary" style="background: #ef4444; margin-top: 30px; padding: 12px 30px;"><i class="fa-solid fa-phone-slash"></i> End Call</button>
+  <button onclick="endCall()" class="btn-primary" style="background: #ef4444; margin-top: 40px; padding: 12px 35px;"><i class="fa-solid fa-phone-slash"></i> End Call</button>
 </div>
 
 <script src="/socket.io/socket.io.js"></script>
@@ -396,7 +384,7 @@
     } else {
       mediaRecorder.stop();
       isRecording = false;
-      btn.innerHTML = `<i class="fa-solid fa-microphone"></i> Voice`;
+      btn.innerHTML = `<i class="fa-solid fa-microphone"></i> Voice Note`;
     }
   }
 
@@ -419,14 +407,12 @@
     else if (type === 'audio') appendMsg(`<audio controls src="${decrypted}" style="max-width:200px; height:36px;"></audio>`, 'received', true);
   });
 
-  // --- WebRTC Call System ---
-  async function startCall(isVideo) {
+  // --- Clean P2P Audio Call System ---
+  async function startAudioCall() {
     document.getElementById('call-modal').style.display = 'flex';
-    document.getElementById('video-ui').style.display = isVideo ? 'block' : 'none';
-    document.getElementById('audio-ui').style.display = isVideo ? 'none' : 'flex';
+    document.getElementById('call-status-text').innerText = 'Calling...';
 
-    localStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: isVideo });
-    if (isVideo) document.getElementById('local-video').srcObject = localStream;
+    localStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
 
     peerConnection = new RTCPeerConnection(rtcConfig);
     localStream.getTracks().forEach(track => peerConnection.addTrack(track, localStream));
@@ -437,29 +423,22 @@
 
     peerConnection.ontrack = e => {
       const remoteAudio = document.getElementById('remote-audio');
-      const remoteVideo = document.getElementById('remote-video');
-      
-      if (isVideo) {
-        remoteVideo.srcObject = e.streams[0];
-      } else {
-        remoteAudio.srcObject = e.streams[0];
-        remoteAudio.play().catch(err => console.log("Audio autoplay blocked:", err));
-      }
+      remoteAudio.srcObject = e.streams[0];
+      remoteAudio.play().catch(err => console.log("Audio autoplay blocked:", err));
+      document.getElementById('call-status-text').innerText = 'Connected';
     };
 
     const offer = await peerConnection.createOffer();
     await peerConnection.setLocalDescription(offer);
-    socket.emit('call-user', { roomId, signal: offer, isVideo });
+    socket.emit('call-user', { roomId, signal: offer, isVideo: false });
   }
 
   socket.on('call-made', async ({ signal, isVideo }) => {
-    if (confirm(`Incoming ${isVideo ? 'Video' : 'Audio'} Call. Accept?`)) {
+    if (confirm(`Incoming Secure Audio Call. Accept?`)) {
       document.getElementById('call-modal').style.display = 'flex';
-      document.getElementById('video-ui').style.display = isVideo ? 'block' : 'none';
-      document.getElementById('audio-ui').style.display = isVideo ? 'none' : 'flex';
+      document.getElementById('call-status-text').innerText = 'Connected';
 
-      localStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: isVideo });
-      if (isVideo) document.getElementById('local-video').srcObject = localStream;
+      localStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
 
       peerConnection = new RTCPeerConnection(rtcConfig);
       localStream.getTracks().forEach(track => peerConnection.addTrack(track, localStream));
@@ -470,14 +449,8 @@
 
       peerConnection.ontrack = e => {
         const remoteAudio = document.getElementById('remote-audio');
-        const remoteVideo = document.getElementById('remote-video');
-
-        if (isVideo) {
-          remoteVideo.srcObject = e.streams[0];
-        } else {
-          remoteAudio.srcObject = e.streams[0];
-          remoteAudio.play().catch(err => console.log("Audio autoplay blocked:", err));
-        }
+        remoteAudio.srcObject = e.streams[0];
+        remoteAudio.play().catch(err => console.log("Audio autoplay blocked:", err));
       };
 
       await peerConnection.setRemoteDescription(new RTCSessionDescription(signal));
@@ -489,6 +462,7 @@
 
   socket.on('answer-made', async ({ signal }) => {
     await peerConnection.setRemoteDescription(new RTCSessionDescription(signal));
+    document.getElementById('call-status-text').innerText = 'Connected';
   });
 
   socket.on('ice-candidate', async candidate => {
