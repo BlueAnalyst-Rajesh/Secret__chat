@@ -176,7 +176,7 @@
       width: 42px; height: 42px; border-radius: 50%; background: var(--accent); border: none; color: white; display: flex; justify-content: center; align-items: center; cursor: pointer;
     }
 
-    /* Video & Audio Call Modal */
+    /* Call Modal Window */
     #call-modal {
       display: none;
       position: fixed;
@@ -272,11 +272,12 @@
     <div class="avatar-circle">
       <i class="fa-solid fa-user"></i>
     </div>
-    <h3 style="color:#fff;">Audio Call in Progress...</h3>
+    <h3 style="color:#fff;">Audio Call Connected</h3>
+    <p style="color:#818cf8; font-size:0.85rem;" id="audio-status">Audio Active</p>
   </div>
 
-  <!-- Hidden audio elements to play remote audio track -->
-  <audio id="remote-audio" autoplay></audio>
+  <!-- Audio playback element for audio calls -->
+  <audio id="remote-audio" autoplay playsinline></audio>
 
   <button onclick="endCall()" class="btn-primary" style="background: #ef4444; margin-top: 30px; padding: 12px 30px;"><i class="fa-solid fa-phone-slash"></i> End Call</button>
 </div>
@@ -435,10 +436,14 @@
     };
 
     peerConnection.ontrack = e => {
+      const remoteAudio = document.getElementById('remote-audio');
+      const remoteVideo = document.getElementById('remote-video');
+      
       if (isVideo) {
-        document.getElementById('remote-video').srcObject = e.streams[0];
+        remoteVideo.srcObject = e.streams[0];
       } else {
-        document.getElementById('remote-audio').srcObject = e.streams[0];
+        remoteAudio.srcObject = e.streams[0];
+        remoteAudio.play().catch(err => console.log("Audio autoplay blocked:", err));
       }
     };
 
@@ -464,10 +469,14 @@
       };
 
       peerConnection.ontrack = e => {
+        const remoteAudio = document.getElementById('remote-audio');
+        const remoteVideo = document.getElementById('remote-video');
+
         if (isVideo) {
-          document.getElementById('remote-video').srcObject = e.streams[0];
+          remoteVideo.srcObject = e.streams[0];
         } else {
-          document.getElementById('remote-audio').srcObject = e.streams[0];
+          remoteAudio.srcObject = e.streams[0];
+          remoteAudio.play().catch(err => console.log("Audio autoplay blocked:", err));
         }
       };
 
