@@ -3,148 +3,266 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Secret Chat - Premium</title>
+  <title>Secret Chat - Modern UI</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <style>
     :root {
-      --bg: #0f172a;
-      --card-bg: #1e293b;
+      --bg: #0b0e14;
+      --card-bg: rgba(22, 31, 47, 0.85);
       --accent: #6366f1;
       --accent-hover: #4f46e5;
+      --sent-msg: #3b82f6;
+      --recv-msg: #1e293b;
       --text: #f8fafc;
       --text-muted: #94a3b8;
     }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
     body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background: var(--bg);
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      background: radial-gradient(circle at top left, #1e1b4b, #0f172a, #090d16);
       color: var(--text);
-      margin: 0;
       display: flex;
       justify-content: center;
       align-items: center;
       min-height: 100vh;
+      padding: 10px;
     }
-    .container {
+
+    .app-container {
       width: 100%;
-      max-width: 500px;
-      height: 90vh;
+      max-width: 550px;
+      height: 92vh;
       background: var(--card-bg);
-      border-radius: 16px;
-      box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+      backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 24px;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6);
       display: flex;
       flex-direction: column;
       overflow: hidden;
     }
+
+    /* Header */
     .header {
-      padding: 15px 20px;
-      background: #111827;
+      padding: 18px 24px;
+      background: rgba(15, 23, 42, 0.7);
       display: flex;
       justify-content: space-between;
       align-items: center;
-      border-bottom: 1px solid #334155;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
     }
-    .header h2 { margin: 0; font-size: 1.2rem; }
-    .status-badge { font-size: 0.8rem; color: #10b981; font-weight: bold; }
-    
-    #setup-screen { padding: 30px 20px; display: flex; flex-direction: column; gap: 15px; }
+    .header-info { display: flex; align-items: center; gap: 12px; }
+    .header-info i { font-size: 1.4rem; color: #818cf8; }
+    .header h2 { font-size: 1.15rem; font-weight: 600; }
+    .status-badge {
+      font-size: 0.75rem;
+      background: rgba(16, 185, 129, 0.15);
+      color: #10b981;
+      padding: 4px 10px;
+      border-radius: 20px;
+      border: 1px solid rgba(16, 185, 129, 0.3);
+      font-weight: 600;
+    }
+
+    /* Setup Screen */
+    #setup-screen {
+      padding: 40px 30px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      justify-content: center;
+      height: 100%;
+    }
+    .input-group { position: relative; }
+    .input-group i {
+      position: absolute;
+      left: 14px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--text-muted);
+    }
     input[type="text"], input[type="password"] {
       width: 100%;
-      padding: 12px;
-      background: #0f172a;
-      border: 1px solid #334155;
-      border-radius: 8px;
+      padding: 14px 14px 14px 42px;
+      background: rgba(15, 23, 42, 0.6);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 12px;
       color: #fff;
-      box-sizing: border-box;
+      font-size: 0.95rem;
+      outline: none;
+      transition: 0.3s;
     }
-    button {
-      padding: 10px 16px;
-      background: var(--accent);
+    input:focus { border-color: var(--accent); box-shadow: 0 0 10px rgba(99, 102, 241, 0.3); }
+
+    .btn-primary {
+      padding: 14px;
+      background: linear-gradient(135deg, #6366f1, #4f46e5);
       border: none;
-      border-radius: 8px;
+      border-radius: 12px;
       color: white;
-      font-weight: bold;
+      font-weight: 600;
+      font-size: 1rem;
       cursor: pointer;
       transition: 0.2s;
+      box-shadow: 0 4px 15px rgba(99, 102, 241, 0.4);
     }
-    button:hover { background: var(--accent-hover); }
+    .btn-primary:hover { opacity: 0.9; transform: translateY(-1px); }
 
+    /* Chat Screen */
     #chat-screen { display: none; flex-direction: column; height: 100%; }
+
     .action-bar {
-      padding: 10px;
-      background: #1e293b;
+      padding: 12px 16px;
+      background: rgba(15, 23, 42, 0.5);
       display: flex;
-      gap: 8px;
-      border-bottom: 1px solid #334155;
+      gap: 10px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
       overflow-x: auto;
     }
+    .action-btn {
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      color: #e2e8f0;
+      padding: 8px 14px;
+      border-radius: 20px;
+      font-size: 0.85rem;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: 0.2s;
+    }
+    .action-btn:hover { background: rgba(255, 255, 255, 0.15); color: #fff; }
+
     #chat-box {
       flex: 1;
-      padding: 15px;
+      padding: 20px;
       overflow-y: auto;
       display: flex;
       flex-direction: column;
-      gap: 10px;
-      background: #0b0f19;
+      gap: 12px;
+      background: rgba(0, 0, 0, 0.2);
     }
+
+    /* Message Bubbles */
+    .msg-wrapper { display: flex; flex-direction: column; max-width: 78%; }
+    .sent-wrapper { align-self: flex-end; }
+    .recv-wrapper { align-self: flex-start; }
+
     .msg {
-      max-width: 75%;
-      padding: 10px 14px;
-      border-radius: 12px;
-      font-size: 0.95rem;
+      padding: 12px 16px;
+      border-radius: 18px;
+      font-size: 0.92rem;
+      line-height: 1.4;
       word-break: break-word;
+      position: relative;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.2);
     }
-    .sent { background: #4f46e5; align-self: flex-end; border-bottom-right-radius: 2px; }
-    .received { background: #334155; align-self: flex-start; border-bottom-left-radius: 2px; }
-    
+    .sent { background: linear-gradient(135deg, #3b82f6, #2563eb); color: #fff; border-bottom-right-radius: 4px; }
+    .received { background: var(--recv-msg); color: #e2e8f0; border-bottom-left-radius: 4px; border: 1px solid rgba(255,255,255,0.05); }
+
+    .msg-time {
+      font-size: 0.68rem;
+      opacity: 0.75;
+      margin-top: 4px;
+      align-self: flex-end;
+    }
+
     .file-card {
       display: flex;
       align-items: center;
-      gap: 8px;
-      background: rgba(0,0,0,0.2);
-      padding: 8px;
-      border-radius: 6px;
+      gap: 12px;
+      background: rgba(0,0,0,0.25);
+      padding: 10px 14px;
+      border-radius: 12px;
+      border: 1px solid rgba(255,255,255,0.08);
     }
-    .file-card a { color: #60a5fa; text-decoration: none; font-weight: bold; }
-    
-    .typing-indicator { font-size: 0.8rem; color: var(--text-muted); padding: 5px 15px; }
+    .file-card a { color: #60a5fa; text-decoration: none; font-weight: 600; }
 
-    .input-bar { padding: 12px; display: flex; gap: 8px; background: #111827; }
-    
-    /* Video Call Screen Overlay */
+    .typing-indicator { font-size: 0.8rem; color: var(--text-muted); padding: 4px 20px; height: 18px; }
+
+    /* Input Bar */
+    .input-bar {
+      padding: 14px 18px;
+      display: flex;
+      gap: 10px;
+      background: rgba(15, 23, 42, 0.8);
+      border-top: 1px solid rgba(255,255,255,0.08);
+      align-items: center;
+    }
+    .chat-input {
+      flex: 1;
+      padding: 12px 16px;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 25px;
+      color: #fff;
+      outline: none;
+    }
+    .send-btn {
+      width: 42px;
+      height: 42px;
+      border-radius: 50%;
+      background: var(--accent);
+      border: none;
+      color: white;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+    .send-btn:hover { background: var(--accent-hover); transform: scale(1.05); }
+
+    /* Video Overlay */
     #video-modal {
       display: none;
       position: fixed;
       inset: 0;
-      background: rgba(0,0,0,0.9);
+      background: rgba(0,0,0,0.92);
+      backdrop-filter: blur(10px);
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      z-index: 100;
+      z-index: 1000;
     }
-    .video-container { position: relative; width: 90%; max-width: 600px; height: 60vh; background: #000; border-radius: 12px; overflow: hidden; }
+    .video-container { position: relative; width: 90%; max-width: 650px; height: 65vh; background: #111; border-radius: 20px; overflow: hidden; border: 1px solid rgba(255,255,255,0.2); }
     #remote-video { width: 100%; height: 100%; object-fit: cover; }
-    #local-video { position: absolute; bottom: 10px; right: 10px; width: 120px; height: 90px; border-radius: 8px; object-fit: cover; border: 2px solid #fff; }
+    #local-video { position: absolute; bottom: 15px; right: 15px; width: 130px; height: 100px; border-radius: 12px; object-fit: cover; border: 2px solid #fff; box-shadow: 0 4px 12px rgba(0,0,0,0.5); }
   </style>
 </head>
 <body>
 
-<div class="container">
+<div class="app-container">
   <div class="header">
-    <h2>🔒 Secret Chat</h2>
+    <div class="header-info">
+      <i class="fa-solid fa-user-shield"></i>
+      <h2>Secret Chat</h2>
+    </div>
     <span id="status" class="status-badge">Offline</span>
   </div>
 
   <div id="setup-screen">
-    <input type="text" id="room" placeholder="Enter Secret Room Name">
-    <input type="password" id="key" placeholder="Enter Encryption Secret Key">
-    <button onclick="joinRoom()">Join Chat</button>
+    <div class="input-group">
+      <i class="fa-solid fa-door-open"></i>
+      <input type="text" id="room" placeholder="Secret Room Name">
+    </div>
+    <div class="input-group">
+      <i class="fa-solid fa-key"></i>
+      <input type="password" id="key" placeholder="Encryption Key">
+    </div>
+    <button class="btn-primary" onclick="joinRoom()">Enter Chat</button>
   </div>
 
   <div id="chat-screen">
     <div class="action-bar">
-      <button onclick="startCall(true)">📹 Video Call</button>
-      <button onclick="startCall(false)">📞 Audio Call</button>
-      <button onclick="document.getElementById('file-input').click()">📁 File/Image</button>
-      <button id="rec-btn" onclick="toggleRecord()">🎤 Voice</button>
+      <button class="action-btn" onclick="startCall(true)"><i class="fa-solid fa-video"></i> Video</button>
+      <button class="action-btn" onclick="startCall(false)"><i class="fa-solid fa-phone"></i> Audio</button>
+      <button class="action-btn" onclick="document.getElementById('file-input').click()"><i class="fa-solid fa-paperclip"></i> File</button>
+      <button class="action-btn" id="rec-btn" onclick="toggleRecord()"><i class="fa-solid fa-microphone"></i> Voice</button>
       <input type="file" id="file-input" style="display:none" onchange="sendFile(event)">
     </div>
 
@@ -152,19 +270,19 @@
     <div id="typing-status" class="typing-indicator"></div>
 
     <div class="input-bar">
-      <input type="text" id="message" placeholder="Type a message..." oninput="notifyTyping()">
-      <button onclick="sendText()">Send</button>
+      <input type="text" id="message" class="chat-input" placeholder="Type a message..." oninput="notifyTyping()" onkeypress="if(event.key==='Enter') sendText()">
+      <button class="send-btn" onclick="sendText()"><i class="fa-solid fa-paper-plane"></i></button>
     </div>
   </div>
 </div>
 
-<!-- Video Call View -->
+<!-- Video Call Window -->
 <div id="video-modal">
   <div class="video-container">
     <video id="remote-video" autoplay playsinline></video>
     <video id="local-video" autoplay playsinline muted></video>
   </div>
-  <button onclick="endCall()" style="background: #ef4444; margin-top: 20px; padding: 12px 24px;">End Call</button>
+  <button onclick="endCall()" class="btn-primary" style="background: #ef4444; margin-top: 20px; padding: 12px 30px;"><i class="fa-solid fa-phone-slash"></i> End Call</button>
 </div>
 
 <script src="/socket.io/socket.io.js"></script>
@@ -202,22 +320,37 @@
     socket.emit('join-room', roomId);
     document.getElementById('setup-screen').style.display = 'none';
     document.getElementById('chat-screen').style.display = 'flex';
-    document.getElementById('status').innerText = 'Connected';
+    document.getElementById('status').innerText = 'Online';
+  }
+
+  function getTime() {
+    const d = new Date();
+    return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   }
 
   function appendMsg(content, type, isHTML = false) {
     const box = document.getElementById('chat-box');
+    const wrapper = document.createElement('div');
+    wrapper.className = `msg-wrapper ${type === 'sent' ? 'sent-wrapper' : 'recv-wrapper'}`;
+    
     const div = document.createElement('div');
     div.className = `msg ${type}`;
     if (isHTML) div.innerHTML = content;
     else div.textContent = content;
-    box.appendChild(div);
+
+    const timeSpan = document.createElement('span');
+    timeSpan.className = 'msg-time';
+    timeSpan.innerText = getTime();
+
+    div.appendChild(timeSpan);
+    wrapper.appendChild(div);
+    box.appendChild(wrapper);
     box.scrollTop = box.scrollHeight;
   }
 
   function sendText() {
     const msgInput = document.getElementById('message');
-    if (!msgInput.value) return;
+    if (!msgInput.value.trim()) return;
     const encrypted = xorEncrypt(msgInput.value, secretKey);
     socket.emit('send-message', { roomId, data: encrypted, type: 'text' });
     appendMsg(msgInput.value, 'sent');
@@ -238,9 +371,9 @@
 
   function renderFile(dataUrl, name, fileType, sender) {
     if (fileType.startsWith('image/')) {
-      appendMsg(`<img src="${dataUrl}" style="max-width:100%; border-radius:8px;">`, sender, true);
+      appendMsg(`<img src="${dataUrl}" style="max-width:100%; border-radius:12px; margin-bottom:4px;">`, sender, true);
     } else {
-      appendMsg(`<div class="file-card">📄 <span>${name}</span> <a href="${dataUrl}" download="${name}">Download</a></div>`, sender, true);
+      appendMsg(`<div class="file-card"><i class="fa-solid fa-file-lines fa-xl"></i> <div><span>${name}</span><br><a href="${dataUrl}" download="${name}">Download</a></div></div>`, sender, true);
     }
   }
 
@@ -257,17 +390,17 @@
         reader.onload = () => {
           const encrypted = xorEncrypt(reader.result, secretKey);
           socket.emit('send-message', { roomId, data: encrypted, type: 'audio' });
-          appendMsg(`<audio controls src="${reader.result}"></audio>`, 'sent', true);
+          appendMsg(`<audio controls src="${reader.result}" style="max-width:200px; height:36px;"></audio>`, 'sent', true);
         };
         reader.readAsDataURL(blob);
       };
       mediaRecorder.start();
       isRecording = true;
-      btn.textContent = "🛑 Stop";
+      btn.innerHTML = `<i class="fa-solid fa-circle-stop" style="color:#ef4444;"></i> Stop`;
     } else {
       mediaRecorder.stop();
       isRecording = false;
-      btn.textContent = "🎤 Voice";
+      btn.innerHTML = `<i class="fa-solid fa-microphone"></i> Voice`;
     }
   }
 
@@ -287,7 +420,7 @@
     const decrypted = xorDecrypt(data, secretKey);
     if (type === 'text') appendMsg(decrypted, 'received');
     else if (type === 'file') renderFile(decrypted, fileName, fileType, 'received');
-    else if (type === 'audio') appendMsg(`<audio controls src="${decrypted}"></audio>`, 'received', true);
+    else if (type === 'audio') appendMsg(`<audio controls src="${decrypted}" style="max-width:200px; height:36px;"></audio>`, 'received', true);
   });
 
   // --- WebRTC Audio / Video Call ---
